@@ -274,6 +274,7 @@ main(void)
     //ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER4);
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER5);
 
+    tick = 0;
     voices = 1;
     dac_init();
 
