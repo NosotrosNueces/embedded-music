@@ -68,6 +68,9 @@
 // 3 for music
 // 1 to update tick
 // 1 to write to DAC
+//
+
+uint16_t *wave_form;
 
 uint32_t tick;
 
@@ -114,10 +117,10 @@ Timer0HandlerA(void)
     //
     ROM_TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ROM_SysCtlClockGet() / line0[tick]);
-    //val[0] = (wave[index0] + wave[(index0 + PERIOD / 4) % PERIOD] + 
-    //    wave[(index0 + PERIOD / 2) % PERIOD] + 
-    //    wave[(index0 + 3 * PERIOD / 4) % PERIOD]) / 4;
-    val[0] = wave[index0];
+    //val[0] = (wave_form[index0] + wave[(index0 + PERIOD / 4) % PERIOD] + 
+    //    wave_form[(index0 + PERIOD / 2) % PERIOD] + 
+    //    wave_form[(index0 + 3 * PERIOD / 4) % PERIOD]) / 4;
+    val[0] = wave_form[index0];
     index0 = (index0 + 1) % PERIOD;
 }
 
@@ -341,6 +344,7 @@ main(void)
 
     line0 = concert_a;
     len = concert_a_len;
+    wave_form = mini_wave;
 
     // Timer7B sets the tempo
     //
