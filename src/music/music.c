@@ -38,6 +38,10 @@
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 
+#include "wave.h"
+#include "dac.h"
+#include "songs.h"
+
 //*****************************************************************************
 //
 //! \addtogroup example_list
@@ -59,7 +63,36 @@
 // on the UART.
 //
 //*****************************************************************************
-uint32_t g_ui32Flags;
+//
+// 5 timers
+// 3 for music
+// 1 to update tick
+// 1 to write to DAC
+
+uint32_t tick;
+
+uint16_t *line0;
+uint16_t *line1;
+uint16_t *line2;
+uint16_t *line3;
+uint16_t *line4;
+uint16_t *line5;
+uint16_t *line6;
+uint16_t *line7;
+
+uint32_t len;
+
+uint32_t voices;
+uint16_t val[8];
+
+uint32_t index0;
+uint32_t index1;
+uint32_t index2;
+uint32_t index3;
+uint32_t index4;
+uint32_t index5;
+uint32_t index6;
+uint32_t index7;
 
 //*****************************************************************************
 //
@@ -73,110 +106,128 @@ __error__(char *pcFilename, uint32_t ui32Line)
 }
 #endif
 
-//*****************************************************************************
-//
-// The interrupt handler for the first timer interrupt.
-//
-//*****************************************************************************
 void
-Timer0IntHandler(void)
+Timer0HandlerA(void)
 {
-    char cOne, cTwo;
-
     //
     // Clear the timer interrupt.
     //
     ROM_TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-
-    //
-    // Toggle the flag for the first timer.
-    //
-    HWREGBITW(&g_ui32Flags, 0) ^= 1;
-
-    //
-    // Use the flags to Toggle the LED for this timer
-    //
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, g_ui32Flags << 1);
-
-    //
-    // Update the interrupt status on the display.
-    //
-    ROM_IntMasterDisable();
-    cOne = HWREGBITW(&g_ui32Flags, 0) ? '1' : '0';
-    cTwo = HWREGBITW(&g_ui32Flags, 1) ? '1' : '0';
-    UARTprintf("\rT1: %c  T2: %c", cOne, cTwo);
-    ROM_IntMasterEnable();
+    ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ROM_SysCtlClockGet() / line0[tick]);
+    val[0] = (wave[index0] + wave[(index0 + PERIOD / 4) % PERIOD] + 
+        wave[(index0 + PERIOD / 2) % PERIOD] + 
+        wave[(index0 + 3 * PERIOD / 4) % PERIOD]) / 4;
+    index0 = (index0 + 1) % PERIOD;
 }
 
-//*****************************************************************************
-//
-// The interrupt handler for the second timer interrupt.
-//
-//*****************************************************************************
 void
-Timer1IntHandler(void)
+Timer0HandlerB(void)
 {
-    char cOne, cTwo;
+    //
+    // Clear the timer interrupt.
+    //
+    ROM_TimerIntClear(TIMER0_BASE, TIMER_TIMB_TIMEOUT);
+}
 
+void
+Timer1HandlerA(void)
+{
     //
     // Clear the timer interrupt.
     //
     ROM_TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
-
-    //
-    // Toggle the flag for the second timer.
-    //
-    HWREGBITW(&g_ui32Flags, 1) ^= 1;
-
-    //
-    // Use the flags to Toggle the LED for this timer
-    //
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, g_ui32Flags << 1);
-
-    //
-    // Update the interrupt status on the display.
-    //
-    ROM_IntMasterDisable();
-    cOne = HWREGBITW(&g_ui32Flags, 0) ? '1' : '0';
-    cTwo = HWREGBITW(&g_ui32Flags, 1) ? '1' : '0';
-    UARTprintf("\rT1: %c  T2: %c", cOne, cTwo);
-    ROM_IntMasterEnable();
 }
 
-//*****************************************************************************
-//
-// Configure the UART and its pins.  This must be called before UARTprintf().
-//
-//*****************************************************************************
 void
-ConfigureUART(void)
+Timer1HandlerB(void)
 {
     //
-    // Enable the GPIO Peripheral used by the UART.
+    // Clear the timer interrupt.
     //
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    ROM_TimerIntClear(TIMER1_BASE, TIMER_TIMB_TIMEOUT);
+}
 
+void
+Timer2HandlerA(void)
+{
     //
-    // Enable UART0
+    // Clear the timer interrupt.
     //
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+    ROM_TimerIntClear(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
+}
 
+void
+Timer2HandlerB(void)
+{
     //
-    // Configure GPIO Pins for UART mode.
+    // Clear the timer interrupt.
     //
-    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
-    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
-    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+    ROM_TimerIntClear(TIMER2_BASE, TIMER_TIMB_TIMEOUT);
+}
 
+void
+Timer3HandlerA(void)
+{
     //
-    // Use the internal 16MHz oscillator as the UART clock source.
+    // Clear the timer interrupt.
     //
-    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+    ROM_TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
+}
 
+void
+Timer3HandlerB(void)
+{
     //
-    // Initialize the UART for console I/O.
+    // Clear the timer interrupt.
     //
-    UARTStdioConfig(0, 115200, 16000000);
+    ROM_TimerIntClear(TIMER3_BASE, TIMER_TIMB_TIMEOUT);
+}
+
+void
+Timer4HandlerA(void)
+{
+    //
+    // Clear the timer interrupt.
+    //
+    ROM_TimerIntClear(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
+}
+
+void
+Timer4HandlerB(void)
+{
+    //
+    // Clear the timer interrupt.
+    //
+    ROM_TimerIntClear(TIMER4_BASE, TIMER_TIMB_TIMEOUT);
+}
+
+
+// outputs to the DAC
+void
+Timer5HandlerA(void)
+{
+    //
+    // Clear the timer interrupt.
+    //
+    ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
+    uint16_t superpos = 0;
+    int i;
+    for (i = 0; i < voices; i++) {
+        superpos += val[i];
+    }
+    superpos /= voices;
+    dac_out(superpos);
+}
+
+// Updates the beat of the song
+void
+Timer5HandlerB(void)
+{
+    //
+    // Clear the timer interrupt.
+    //
+    ROM_TimerIntClear(TIMER5_BASE, TIMER_TIMB_TIMEOUT);
+    tick = (tick + 1) % len;
 }
 
 //*****************************************************************************
@@ -202,29 +253,25 @@ main(void)
                        SYSCTL_XTAL_16MHZ);
 
     //
-    // Initialize the UART and write status.
-    //
-    ConfigureUART();
-
-    UARTprintf("\033[2JTimers example\n");
-    UARTprintf("T1: 0  T2: 0");
-
-    //
     // Enable the GPIO port that is used for the on-board LED.
     //
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    //ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
 
     //
     // Enable the GPIO pins for the LED (PF1 & PF2).
     //
-    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_1);
+    //ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_1);
 
 
     //
     // Enable the peripherals used by this example.
     //
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
-    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
+    //ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
+    //ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER2);
+    //ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+    //ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER4);
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER5);
 
     //
     // Enable processor interrupts.
@@ -235,28 +282,71 @@ main(void)
     // Configure the two 32-bit periodic timers.
     //
     ROM_TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-    ROM_TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
-    ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ROM_SysCtlClockGet());
-    ROM_TimerLoadSet(TIMER1_BASE, TIMER_A, ROM_SysCtlClockGet() / 2);
+    //ROM_TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);
+    //ROM_TimerConfigure(TIMER2_BASE, TIMER_CFG_PERIODIC);
+    //ROM_TimerConfigure(TIMER3_BASE, TIMER_CFG_PERIODIC);
+    //ROM_TimerConfigure(TIMER4_BASE, TIMER_CFG_PERIODIC);
+    ROM_TimerConfigure(TIMER5_BASE, TIMER_CFG_PERIODIC);
+
 
     //
     // Setup the interrupts for the timer timeouts.
     //
     ROM_IntEnable(INT_TIMER0A);
-    ROM_IntEnable(INT_TIMER1A);
+    //ROM_IntEnable(INT_TIMER0B);
+    //ROM_IntEnable(INT_TIMER1A);
+    //ROM_IntEnable(INT_TIMER1B);
+    //ROM_IntEnable(INT_TIMER2A);
+    //ROM_IntEnable(INT_TIMER2B);
+    //ROM_IntEnable(INT_TIMER3A);
+    //ROM_IntEnable(INT_TIMER3B);
+    //ROM_IntEnable(INT_TIMER4A);
+    //ROM_IntEnable(INT_TIMER4B);
+    ROM_IntEnable(INT_TIMER5A);
+    ROM_IntEnable(INT_TIMER5B);
+
     ROM_TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-    ROM_TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER0_BASE, TIMER_TIMB_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER1_BASE, TIMER_TIMB_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER2_BASE, TIMER_TIMB_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER3_BASE, TIMER_TIMB_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER4_BASE, TIMER_TIMA_TIMEOUT);
+    //ROM_TimerIntEnable(TIMER4_BASE, TIMER_TIMB_TIMEOUT);
+    ROM_TimerIntEnable(TIMER5_BASE, TIMER_TIMA_TIMEOUT);
+    ROM_TimerIntEnable(TIMER5_BASE, TIMER_TIMB_TIMEOUT);
 
     //
     // Enable the timers.
     //
     ROM_TimerEnable(TIMER0_BASE, TIMER_A);
-    ROM_TimerEnable(TIMER1_BASE, TIMER_A);
+    //ROM_TimerEnable(TIMER0_BASE, TIMER_B);
+    //ROM_TimerEnable(TIMER1_BASE, TIMER_A);
+    //ROM_TimerEnable(TIMER1_BASE, TIMER_B);
+    //ROM_TimerEnable(TIMER2_BASE, TIMER_A);
+    //ROM_TimerEnable(TIMER2_BASE, TIMER_B);
+    //ROM_TimerEnable(TIMER3_BASE, TIMER_A);
+    //ROM_TimerEnable(TIMER3_BASE, TIMER_B);
+    //ROM_TimerEnable(TIMER4_BASE, TIMER_A);
+    //ROM_TimerEnable(TIMER4_BASE, TIMER_B);
+    ROM_TimerEnable(TIMER5_BASE, TIMER_A);
+    ROM_TimerEnable(TIMER5_BASE, TIMER_B);
+
+    // Timer7B sets the tempo
+    //
+    // Sets the interval to be the 16th notes:
+    // cycles/sec * (60 s/m) * (1 / 76 m / b) / 4
+    ROM_TimerLoadSet(TIMER5_BASE, TIMER_B, ROM_SysCtlClockGet() * 60 / 76 / 4);
+    ROM_TimerLoadSet(TIMER5_BASE, TIMER_B, ROM_SysCtlClockGet() / 8000);
+
+    line0 = concert_a;
+    len = concert_a_len;
 
     //
     // Loop forever while the timers run.
     //
-    while(1)
-    {
+    while (1) {
     }
 }
