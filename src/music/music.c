@@ -273,6 +273,9 @@ main(void)
     //ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER4);
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER5);
 
+    voices = 1;
+    dac_init();
+
     //
     // Enable processor interrupts.
     //
@@ -334,16 +337,17 @@ main(void)
     ROM_TimerEnable(TIMER5_BASE, TIMER_A);
     ROM_TimerEnable(TIMER5_BASE, TIMER_B);
 
+    line0 = concert_a;
+    len = concert_a_len;
+
     // Timer7B sets the tempo
     //
     // Sets the interval to be the 16th notes:
     // cycles/sec * (60 s/m) * (1 / 76 m / b) / 4
     ROM_TimerLoadSet(TIMER5_BASE, TIMER_B, ROM_SysCtlClockGet() * 60 / 76 / 4);
-    ROM_TimerLoadSet(TIMER5_BASE, TIMER_B, ROM_SysCtlClockGet() / 8000);
-
-    line0 = concert_a;
-    len = concert_a_len;
-
+    ROM_TimerLoadSet(TIMER5_BASE, TIMER_A, ROM_SysCtlClockGet() / 8000);
+    ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ROM_SysCtlClockGet() / line0[tick]);
+    
     //
     // Loop forever while the timers run.
     //

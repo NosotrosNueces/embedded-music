@@ -54,7 +54,10 @@ ${COMPILER}:
 #
 ${COMPILER}/${PROJECT}.axf: ${COMPILER}/startup_${COMPILER}.o
 ${COMPILER}/${PROJECT}.axf: ${COMPILER}/${PROJECT}.o
-${COMPILER}/${PROJECT}.axf: ${COMPILER}/uartstdio.o
+${COMPILER}/${PROJECT}.axf: ${COMPILER}/dac.o
+${COMPILER}/${PROJECT}.axf: ${COMPILER}/music.o
+${COMPILER}/${PROJECT}.axf: ${COMPILER}/songs.o
+${COMPILER}/${PROJECT}.axf: ${COMPILER}/wave.o
 ${COMPILER}/${PROJECT}.axf: ${ROOT}/driverlib/${COMPILER}/libdriver.a
 ${COMPILER}/${PROJECT}.axf: ${PROJECT}.ld
 SCATTERgcc_${PROJECT}=${PROJECT}.ld
