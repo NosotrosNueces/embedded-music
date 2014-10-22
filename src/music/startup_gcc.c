@@ -41,8 +41,22 @@ static void IntDefaultHandler(void);
 // External declarations for the interrupt handlers used by the application.
 //
 //*****************************************************************************
-extern void Timer0IntHandler(void);
-extern void Timer1IntHandler(void);
+extern void Timer0HandlerA(void);
+extern void Timer1HandlerA(void);
+extern void Timer2HandlerA(void);
+extern void Timer3HandlerA(void);
+extern void Timer4HandlerA(void);
+extern void Timer5HandlerA(void);
+extern void Timer6HandlerA(void);
+extern void Timer7HandlerA(void);
+extern void Timer0HandlerB(void);
+extern void Timer1HandlerB(void);
+extern void Timer2HandlerB(void);
+extern void Timer3HandlerB(void);
+extern void Timer4HandlerB(void);
+extern void Timer5HandlerB(void);
+extern void Timer6HandlerB(void);
+extern void Timer7HandlerB(void);
 
 //*****************************************************************************
 //
