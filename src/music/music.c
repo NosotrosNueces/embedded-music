@@ -114,9 +114,10 @@ Timer0HandlerA(void)
     //
     ROM_TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ROM_SysCtlClockGet() / line0[tick]);
-    val[0] = (wave[index0] + wave[(index0 + PERIOD / 4) % PERIOD] + 
-        wave[(index0 + PERIOD / 2) % PERIOD] + 
-        wave[(index0 + 3 * PERIOD / 4) % PERIOD]) / 4;
+    //val[0] = (wave[index0] + wave[(index0 + PERIOD / 4) % PERIOD] + 
+    //    wave[(index0 + PERIOD / 2) % PERIOD] + 
+    //    wave[(index0 + 3 * PERIOD / 4) % PERIOD]) / 4;
+    val[0] = wave[index0];
     index0 = (index0 + 1) % PERIOD;
 }
 
